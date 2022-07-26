@@ -1,6 +1,7 @@
 package com.infosys.test.automation.dto;
 
 import com.infosys.test.automation.constants.CondOperatorConstants;
+import com.infosys.test.automation.exceptions.InvalidCondConfigException;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -16,10 +17,35 @@ public class SingleCondConfig implements CondConfig {
     private SingleCondConfig(){
 
     }
-    private SingleCondConfig(String operator, String column, String value){
+    private SingleCondConfig(String operator, String column, String value) throws InvalidCondConfigException {
         this.operator = operator;
         this.column = column;
         this.value = value;
+        validateProperties();
+    }
+
+    private void validateProperties() throws InvalidCondConfigException {
+        boolean validProps = true;
+        StringBuilder exceptionMessageBuilder = new StringBuilder();
+        if (column == null || column.trim().length() == 0){
+            exceptionMessageBuilder.append("The required element \"column\" is not been provided in single condition config\n");
+            validProps=false;
+        }
+        if (value == null || value.trim().length() == 0){
+            exceptionMessageBuilder.append("The required element \"value\" is not been provided in single condition config\n");
+            validProps=false;
+        }
+        if (operator == null || operator.trim().length() == 0){
+            exceptionMessageBuilder.append("The required element \"operator\" is not been provided in single condition config\n");
+            validProps=false;
+        } else if (!(operator.equalsIgnoreCase(CondOperatorConstants.eq) || operator.equalsIgnoreCase(CondOperatorConstants.neq))){
+            exceptionMessageBuilder.append("The required element \"operator\" is not been provided with expected values \""+CondOperatorConstants.eq+"\" | \""+CondOperatorConstants.neq+"\" in single condition config\n");
+            validProps=false;
+        }
+
+        if (!validProps){
+            throw new InvalidCondConfigException(exceptionMessageBuilder.toString());
+        }
     }
     public String toString(){
         StringBuilder stringBuilder = new StringBuilder();
@@ -88,7 +114,7 @@ public class SingleCondConfig implements CondConfig {
             this.value = value;
             return this;
         }
-        public SingleCondConfig build(){
+        public SingleCondConfig build() throws InvalidCondConfigException {
             return new SingleCondConfig(operator,column,value);
         }
     }

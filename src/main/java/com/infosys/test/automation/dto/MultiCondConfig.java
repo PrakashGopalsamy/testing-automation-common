@@ -1,6 +1,7 @@
 package com.infosys.test.automation.dto;
 
 import com.infosys.test.automation.constants.CondOperatorConstants;
+import com.infosys.test.automation.exceptions.InvalidCondConfigException;
 import org.json.simple.parser.ParseException;
 
 import java.util.Locale;
@@ -16,12 +17,46 @@ public class MultiCondConfig implements CondConfig {
     }
     private MultiCondConfig(String logicalOp, SingleCondConfig filterElem1,
                             SingleCondConfig filterElem2, MultiCondConfig filterElem3,
-                            MultiCondConfig filterElem4){
+                            MultiCondConfig filterElem4) throws InvalidCondConfigException {
         this.logicalOp = logicalOp;
         this.filterElem1 = filterElem1;
         this.filterElem2 = filterElem2;
         this.filterElem3 = filterElem3;
         this.filterElem4 = filterElem4;
+        validateProperties();
+    }
+
+    private void validateProperties() throws InvalidCondConfigException {
+        boolean validProps = true;
+        StringBuilder exceptionMessageBuilder = new StringBuilder();
+        if (logicalOp == null || logicalOp.trim().length() == 0){
+            exceptionMessageBuilder.append("The required element \"operator\" is not been provided in single condition config\n");
+            validProps=false;
+        } else if (!(logicalOp.equalsIgnoreCase(CondOperatorConstants.and) || logicalOp.equalsIgnoreCase(CondOperatorConstants.or))){
+            exceptionMessageBuilder.append("The required element \"operator\" is not been provided with expected values \""+CondOperatorConstants.and+"\" | \""+CondOperatorConstants.or+"\" in single condition config\n");
+            validProps=false;
+        }
+
+        int nofCondSet = 0;
+        if (filterElem1 != null){
+            nofCondSet+=1;
+        }
+        if (filterElem2 != null){
+            nofCondSet+=1;
+        }
+        if (filterElem3 != null){
+            nofCondSet+=1;
+        }
+        if (filterElem4 != null){
+            nofCondSet+=1;
+        }
+        if (nofCondSet < 2){
+            exceptionMessageBuilder.append("Mutli Condition config is set with "+nofCondSet+" condition. Multi Condition config has to be used for alteast 2 conditions.\n");
+            validProps=false;
+        }
+        if (!validProps){
+            throw new InvalidCondConfigException(exceptionMessageBuilder.toString());
+        }
     }
 
     public String toString(){
@@ -137,7 +172,7 @@ public class MultiCondConfig implements CondConfig {
             return this;
         }
 
-        public MultiCondConfig build(){
+        public MultiCondConfig build() throws InvalidCondConfigException {
             return new MultiCondConfig(this.logicalOp,this.filterElem1,this.filterElem2,this.filterElem3,this.filterElem4);
         }
     }
